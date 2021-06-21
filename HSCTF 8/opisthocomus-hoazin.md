@@ -90,3 +90,5 @@ Which is the correct solution to the challenge.
 
 ---
 _HSCTF 8 was held on 14-18.06.2021_
+
+_Thanks to [kzawistowski](https://github.com/kzawistowski) for participating in the CTF with me!_
