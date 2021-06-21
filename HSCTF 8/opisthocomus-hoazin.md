@@ -82,8 +82,11 @@ val result = input.map { (it - 65536) xor 1 }.joinToString("") { Character.toStr
 print("The flag is: $result")
 ```
 
-Running the code yields:
+Running the code finally yields:
 
 `The flag is: flag{tH1s_ic3_cr34m_i5_So_FroZ3n_i"M_pr3tTy_Sure_iT's_4ctua1ly_b3nDinG_mY_5p0On}`
 
-It is the solution for the challenge.
+Which is the correct solution to the challenge.
+
+---
+_HSCTF 8 was held on 14-18.06.2021_
