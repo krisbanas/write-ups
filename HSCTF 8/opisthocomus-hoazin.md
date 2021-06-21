@@ -26,13 +26,13 @@ The _opisthocomus-hoazin_ was a Crypto challenge presented at the [HSCTF](https:
 ```
 
 ## Simplifications and Assumptions
-The first step is figuring out what does the code do with the flag. The flag is read from a file in `line 3`, then `line 9` and `line 10` iterate through each character in the flag and transform it. The result of the transformation is stored in the array `ct`. The transformation is a binary OR with unicode code of the character and value of variable `e` as operands. A `modulo n` is applied on the result.
+The first step is figuring out what does the code do with the flag. The flag is read from a file in `line 3`, then `line 9` and `line 10` iterate through each character in the flag and transform it. The result of the transformation is stored in the array `ct`. The transformation is a bitwise XOR with unicode code of the character and value of variable `e` as operands. A `modulo n` is applied on the result.
 
 Let us simplify the code. The value of `e` is contant and printed on the second line of the `output.txt`. Hence `e=65537`. 
 
 We can also assume the range of `ord(ch)`. We could assume it having 32-bits however, we expect the flag to contain only ASCII characters. That leaves us with a 7-bit values (up to 127).
 
-Now, the result of a bitwise OR will never yield a higher value than both of the operands. Since both `ord(ch)` and `e` are much smaller than `n`, the result of `ord(ch)^e` is also much smaller than `n`. We can safely assume that the modulo operation will never change the resulting value and ignore the `n`.
+Now, the result of a bitwise XOR will never yield a higher value than both of the operands. Since both `ord(ch)` and `e` are much smaller than `n`, the result of `ord(ch)^e` is also much smaller than `n`. We can safely assume that the modulo operation will never change the resulting value and ignore the `n`.
 
 Since `n` is ignored, we can remove its derivation (lines 4,5 and 7). I will also skip the imports, prints, and simplify the `e`. The result is:
 
@@ -42,9 +42,48 @@ flag = open('flag.txt','r').read()  # get flag as plaintext (ASCII)
 e = 65537
 ct=[]
 for ch in flag:                  # transform each element of flag
-    ct.append((ord(ch)^e))       # take a character and perform a bitwise OR
+    ct.append((ord(ch)^e))       # take a character and perform a bitwise XOR
 ```
 
 We also have the values stored in array `ct`.
 
+## On Bitwise Operations
 
+Let us take a look at the bitwise XOR. In short, the result of XOR is `1` only if the compared values are different. For the lowercase `a`, the operation will look like this (I add padding in front of the letter to match the length):
+
+```
+  10000000000000001 # value of e in binary
+^ 00000000001100001 # letter a in binary
+= 10000000001100000 # the result
+```
+
+Let's mark the range of ASCII:
+
+![image](https://user-images.githubusercontent.com/26695258/122799098-9f6a5880-d2c1-11eb-8f00-0d883b203e32.png)
+
+Therefore, in practice, the XOR with `e` does two things to the original value:
+1. Adds binary 10000000000000000
+2. Changes the least significant bit to its counterpart
+
+In order to receive the original values, these two steps have to be reversed.
+
+## Reversing
+
+I will use a Kotlin script to perform the reversing. 
+- reversing the addition is subtraction
+- in order to switch the last bit we can simply apply a XOR with 1.
+- after code point is obtained, we get its corresponding `Character` and join to `String` with no separator.
+
+```kotlin
+val input = arrayOf(65639, 65645, 65632, 65638, 65658, 65653, 65609, 65584, 65650, 65630, 65640, 65634, 65586, 65630, 65634, 65651, 65586, 65589, 65644, 65630, 65640, 65588, 65630, 65618, 65646, 65630, 65607, 65651, 65646, 65627, 65586, 65647, 65630, 65640, 65571, 65612, 65630, 65649, 65651, 65586, 65653, 65621, 65656, 65630, 65618, 65652, 65651, 65636, 65630, 65640, 65621, 65574, 65650, 65630, 65589, 65634, 65653, 65652, 65632, 65584, 65645, 65656, 65630, 65635, 65586, 65647, 65605, 65640, 65647, 65606, 65630, 65644, 65624, 65630, 65588, 65649, 65585, 65614, 65647, 65660)
+
+val result = input.map { (it - 65536) xor 1 }.joinToString("") { Character.toString(it) }
+
+print("The flag is: $result")
+```
+
+Running the code yields:
+
+`The flag is: flag{tH1s_ic3_cr34m_i5_So_FroZ3n_i"M_pr3tTy_Sure_iT's_4ctua1ly_b3nDinG_mY_5p0On}`
+
+It is the solution for the challenge.
